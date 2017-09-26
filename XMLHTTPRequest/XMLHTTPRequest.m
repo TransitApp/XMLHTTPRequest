@@ -35,14 +35,14 @@
 - (void)extend:(id)jsContext {
 
     // Simulate the constructor.
-    jsContext[@"XMLHTTPRequest"] = ^{
+    jsContext[@"XMLHttpRequest"] = ^{
         return self;
     };
-    jsContext[@"XMLHTTPRequest"][@"UNSENT"] = @(XMLHttpRequestUNSENT);
-    jsContext[@"XMLHTTPRequest"][@"OPENED"] = @(XMLHTTPRequestOPENED);
-    jsContext[@"XMLHTTPRequest"][@"LOADING"] = @(XMLHTTPRequestLOADING);
-    jsContext[@"XMLHTTPRequest"][@"HEADERS"] = @(XMLHTTPRequestHEADERS);
-    jsContext[@"XMLHTTPRequest"][@"DONE"] = @(XMLHTTPRequestDONE);
+    jsContext[@"XMLHttpRequest"][@"UNSENT"] = @(XMLHttpRequestUNSENT);
+    jsContext[@"XMLHttpRequest"][@"OPENED"] = @(XMLHTTPRequestOPENED);
+    jsContext[@"XMLHttpRequest"][@"LOADING"] = @(XMLHTTPRequestLOADING);
+    jsContext[@"XMLHttpRequest"][@"HEADERS"] = @(XMLHTTPRequestHEADERS);
+    jsContext[@"XMLHttpRequest"][@"DONE"] = @(XMLHTTPRequestDONE);
 
 }
 
