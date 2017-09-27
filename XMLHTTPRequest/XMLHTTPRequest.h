@@ -25,6 +25,7 @@ typedef NS_ENUM(NSUInteger , ReadyState) {
 -(void)setRequestHeader: (NSString *)name :(NSString *)value;
 -(NSString *)getAllResponseHeaders;
 -(NSString *)getReponseHeader:(NSString *)name;
+- (void)addEventListener:(NSString *)type :(JSValue *)listener :(BOOL)capture;
 @end
 
 
