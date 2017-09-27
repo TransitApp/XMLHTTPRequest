@@ -8,6 +8,7 @@
     bool _async;
     NSMutableDictionary *_requestHeaders;
     NSDictionary *_responseHeaders;
+    NSMutableDictionary<NSString *, JSValue *> *_eventListeners;
 };
 
 @synthesize response;
@@ -20,6 +21,7 @@
 @synthesize status;
 @synthesize statusText;
 
+static NSString * const kEventListenerErrorType = @"error";
 
 - (instancetype)init {
     return [self initWithURLSession:[NSURLSession sharedSession]];
@@ -31,6 +33,7 @@
         _urlSession = urlSession;
         self.readyState = @(XMLHttpRequestUNSENT);
         _requestHeaders = [NSMutableDictionary new];
+        _eventListeners = [NSMutableDictionary new];
     }
     return self;
 }
@@ -46,7 +49,10 @@
     jsContext[@"XMLHttpRequest"][@"LOADING"] = @(XMLHttpRequestLOADING);
     jsContext[@"XMLHttpRequest"][@"HEADERS"] = @(XMLHttpRequestHEADERS);
     jsContext[@"XMLHttpRequest"][@"DONE"] = @(XMLHttpRequestDONE);
+}
 
+- (void)addEventListener:(NSString *)type :(JSValue *)listener :(BOOL)capture {
+    [_eventListeners setObject:listener forKey:type];
 }
 
 - (void)open:(NSString *)httpMethod :(NSString *)url :(bool)async {
@@ -68,21 +74,34 @@
     [request setHTTPMethod:_httpMethod];
 
     __block __weak XMLHttpRequest *weakSelf = self;
+    __block __weak NSMutableDictionary<NSString *, JSValue *> *weakEventListeners = _eventListeners;
 
     id completionHandler = ^(NSData *receivedData, NSURLResponse *response, NSError *error) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
-        weakSelf.readyState = @(XMLHttpRequestDONE); // TODO
-        weakSelf.status = @(httpResponse.statusCode);
-        weakSelf.statusText = [NSString stringWithFormat:@"%ld",httpResponse.statusCode];
-        weakSelf.responseText = [[NSString alloc] initWithData:receivedData
-                                                  encoding:NSUTF8StringEncoding];
+        if (error) {
+            for (NSString *type in [weakEventListeners allKeys]) {
+                if ([type isEqualToString:kEventListenerErrorType]) {
+                    JSValue *function = [weakEventListeners objectForKey:type];
+                    if (function) {
+                        [function callWithArguments:@[[error localizedDescription]]];
+                    }
+                }
+            }
+        }
+        else {
+            NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+            weakSelf.readyState = @(XMLHttpRequestDONE); // TODO
+            weakSelf.status = @(httpResponse.statusCode);
+            weakSelf.statusText = [NSString stringWithFormat:@"%ld",httpResponse.statusCode];
+            weakSelf.responseText = [[NSString alloc] initWithData:receivedData
+                                                          encoding:NSUTF8StringEncoding];
 
-        weakSelf.responseType = @"";
-        weakSelf.response = weakSelf.responseText;
-        
-        [weakSelf setAllResponseHeaders:[httpResponse allHeaderFields]];
-        if (weakSelf.onreadystatechange != nil) {
-            [weakSelf.onreadystatechange callWithArguments:@[]];
+            weakSelf.responseType = @"";
+            weakSelf.response = weakSelf.responseText;
+
+            [weakSelf setAllResponseHeaders:[httpResponse allHeaderFields]];
+            if (weakSelf.onreadystatechange != nil) {
+                [weakSelf.onreadystatechange callWithArguments:@[]];
+            }
         }
     };
     NSURLSessionDataTask *task = [_urlSession dataTaskWithRequest:request
