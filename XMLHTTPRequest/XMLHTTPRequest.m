@@ -9,6 +9,7 @@
     NSMutableDictionary *_requestHeaders;
     NSDictionary *_responseHeaders;
     NSMutableDictionary<NSString *, JSValue *> *_eventListeners;
+    NSMutableDictionary<NSString *, JSValue *> *_onreadystatechanges;
 };
 
 @synthesize response;
@@ -34,6 +35,7 @@ static NSString * const kEventListenerErrorType = @"error";
         self.readyState = @(XMLHttpRequestUNSENT);
         _requestHeaders = [NSMutableDictionary new];
         _eventListeners = [NSMutableDictionary new];
+        _onreadystatechanges = [NSMutableDictionary new];
     }
     return self;
 }
@@ -64,6 +66,9 @@ static NSString * const kEventListenerErrorType = @"error";
 }
 
 - (void)send:(id)data {
+    NSString *uniqueId = [NSUUID new].UUIDString;
+    _onreadystatechanges[uniqueId] = self.onreadystatechange;
+    
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:_url];
     for (NSString *name in _requestHeaders) {
         [request setValue:_requestHeaders[name] forHTTPHeaderField:name];
@@ -99,8 +104,12 @@ static NSString * const kEventListenerErrorType = @"error";
             weakSelf.response = weakSelf.responseText;
 
             [weakSelf setAllResponseHeaders:[httpResponse allHeaderFields]];
-            if (weakSelf.onreadystatechange != nil) {
-                [weakSelf.onreadystatechange callWithArguments:@[]];
+            
+            __strong __typeof (weakSelf) sself = weakSelf;
+            JSValue *onreadystatechangeBlock = sself->_onreadystatechanges[uniqueId];
+            if (onreadystatechangeBlock != nil) {
+                [onreadystatechangeBlock callWithArguments:@[]];
+                [sself->_onreadystatechanges removeObjectForKey:uniqueId];
             }
         }
     };
