@@ -109,12 +109,29 @@ static NSString * const kEventListenerErrorType = @"error";
             JSValue *onreadystatechangeBlock = sself->_onreadystatechanges[uniqueId];
             if (onreadystatechangeBlock != nil) {
                 [onreadystatechangeBlock callWithArguments:@[]];
+
+                NSLog(@"=== RESPONSE ===============================");
+                NSLog(@"Unique ID: %@", uniqueId);
+                NSLog(@"Response URL: %@", httpResponse.URL);
+                NSLog(@"Response Headers: %@", httpResponse.allHeaderFields);
+                NSLog(@"Response Body: %@", [[NSString alloc] initWithData:receivedData encoding:NSUTF8StringEncoding]);
+                NSLog(@"============================================");
+
                 [sself->_onreadystatechanges removeObjectForKey:uniqueId];
             }
         }
     };
     NSURLSessionDataTask *task = [_urlSession dataTaskWithRequest:request
                                                 completionHandler:completionHandler];
+
+    NSLog(@"=== REQUEST ================================");
+    NSLog(@"Unique ID: %@", uniqueId);
+    NSLog(@"Request URL: %@", request.URL);
+    NSLog(@"Request Headers: %@", request.allHTTPHeaderFields);
+    NSLog(@"Request Body: %@", request.HTTPBody);
+    NSLog(@"============================================");
+
+
     [task resume];
 }
 
