@@ -112,6 +112,9 @@ static NSString * const kEventListenerErrorType = @"error";
 
                 NSLog(@"=== RESPONSE ===============================");
                 NSLog(@"Unique ID: %@", uniqueId);
+                NSLog(@"Status: %@", [NSString stringWithFormat:@"%ld",httpResponse.statusCode]);
+                NSLog(@"Status text: %@", [[NSString alloc] initWithData:receivedData
+                                                                encoding:NSUTF8StringEncoding]);
                 NSLog(@"Response URL: %@", httpResponse.URL);
                 NSLog(@"Response Headers: %@", httpResponse.allHeaderFields);
                 NSLog(@"Response Body: %@", [[NSString alloc] initWithData:receivedData encoding:NSUTF8StringEncoding]);
